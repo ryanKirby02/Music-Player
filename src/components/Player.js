@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faPlay,
@@ -15,16 +15,16 @@ const Player = ({
   songs,
   setCurrentSong,
   setSongs,
+  songInfo,
+  setSongInfo,
 }) => {
-  //state
-  const [songInfo, setSongInfo] = useState({
-    currentTime: 0,
-    duration: 0,
-  });
-  //UseEffect
-  useEffect(() => {
+
+
+  //handler functions
+
+  const activeLibraryHandler = (nextPrev) => {
     const newSongs = songs.map((song) => {
-      if (song.id === currentSong.id) {
+      if (song.id === nextPrev.id) {
         return {
           ...song,
           active: true,
@@ -37,9 +37,14 @@ const Player = ({
       }
     });
     setSongs(newSongs);
-  }, [currentSong, setSongs, songs]);
+  }
 
-  //handler functions
+  const songEndHandler = async () => {
+    let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
+    await setCurrentSong(songs[(currentIndex + 1) % songs.length]);
+    if (isPlaying) audioRef.current.play();
+  };
+
   const playSongHandler = () => {
     if (isPlaying) {
       audioRef.current.pause();
@@ -53,7 +58,15 @@ const Player = ({
   const timeUpdateHandler = (e) => {
     const current = e.target.currentTime;
     const duration = e.target.duration;
-    setSongInfo({ ...songInfo, currentTime: current, duration: duration });
+    const roundedCurrent = Math.round(current);
+    const roundedDuration = Math.round(duration);
+    const animation = Math.round((roundedCurrent / roundedDuration) * 100);
+    setSongInfo({
+      ...songInfo,
+      currentTime: current,
+      duration: duration,
+      animationPercentage: animation,
+    });
   };
 
   const dragHandler = (e) => {
@@ -65,9 +78,11 @@ const Player = ({
     let currentIndex = songs.findIndex((song) => song.id === currentSong.id);
     if (direction === 'next') {
       await setCurrentSong(songs[(currentIndex + 1) % songs.length]);
+      activeLibraryHandler(songs[(currentIndex + 1) % songs.length]);
     } else if (direction === 'back') {
       if ((currentIndex - 1) % songs.length === -1) {
         await setCurrentSong(songs[songs.length - 1]);
+        activeLibraryHandler(songs[songs.length - 1]);
         if (isPlaying) {
           audioRef.current.play();
         }
@@ -75,9 +90,7 @@ const Player = ({
       }
       await setCurrentSong(songs[(currentIndex - 1) % songs.length]);
     }
-    if (isPlaying) {
-      audioRef.current.play();
-    }
+    if (isPlaying) audioRef.current.play();
   };
 
   //helpful fuctions
@@ -87,17 +100,30 @@ const Player = ({
     );
   };
 
+  //animation styles
+  const trackAnimation = {
+    transition: 'all 0.6s ease',
+    transform: `translateX(${songInfo.animationPercentage}%)`,
+  };
+
+  const trackColors = {
+    background: `linear-gradient(to right, ${currentSong.color[0]}, ${currentSong.color[2]})`,
+  };
+
   return (
     <div className='player'>
       <div className='time-control'>
         <p>{timeFormatter(songInfo.currentTime)}</p>
-        <input
-          min={0}
-          max={songInfo.duration || 0}
-          value={songInfo.currentTime}
-          onChange={dragHandler}
-          type='range'
-        />
+        <div style={trackColors} className='track'>
+          <input
+            min={0}
+            max={songInfo.duration || 0}
+            value={songInfo.currentTime}
+            onChange={dragHandler}
+            type='range'
+          />
+          <div style={trackAnimation} className='animate-track'></div>
+        </div>
         <p>{songInfo.duration ? timeFormatter(songInfo.duration) : '0:00'}</p>
       </div>
       <div className='player-controls'>
@@ -106,18 +132,21 @@ const Player = ({
           className='back'
           size='2x'
           icon={faAngleLeft}
+          color={currentSong.color[0]}
         />
         <FontAwesomeIcon
           onClick={playSongHandler}
           className='play'
           size='2x'
           icon={isPlaying ? faPause : faPlay}
+          color={currentSong.color[1]}
         />
         <FontAwesomeIcon
           onClick={() => skipTrackHandler('next')}
           className='next'
           size='2x'
           icon={faAngleRight}
+          color={currentSong.color[2]}
         />
       </div>
       <audio
@@ -125,6 +154,7 @@ const Player = ({
         onLoadedMetadata={timeUpdateHandler}
         ref={audioRef}
         src={currentSong.audio}
+        onEnded={songEndHandler}
       />
     </div>
   );

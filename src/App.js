@@ -10,16 +10,21 @@ import data from './data';
 
 function App() {
   // State
+  const [songInfo, setSongInfo] = useState({
+    currentTime: 0,
+    duration: 0,
+    animationPercentage: 0,
+  });
   const [songs, setSongs] = useState(data());
   const [currentSong, setCurrentSong] = useState(songs[0]);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false);
 
   //audio reference
   const audioRef = useRef(null);
 
   return (
-    <div className='App'>
+    <div className={`App ${isLibraryOpen ? 'library-active' : ''}`}>
       <Nav isLibraryOpen={isLibraryOpen} setIsLibraryOpen={setIsLibraryOpen} />
       <Song currentSong={currentSong} />
       <Player
@@ -30,6 +35,8 @@ function App() {
         setCurrentSong={setCurrentSong}
         audioRef={audioRef}
         setSongs={setSongs}
+        songInfo={songInfo}
+        setSongInfo={setSongInfo}
       />
       <Library
         songs={songs}

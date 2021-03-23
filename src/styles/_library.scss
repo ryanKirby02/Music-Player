@@ -18,6 +18,7 @@
   display: flex;
   align-items: center;
   padding: 1rem 2rem 1rem 2rem;
+  transition: background 0.8s ease;
   cursor: pointer;
   img {
     width: 30%;
@@ -58,5 +59,21 @@
 
 .library-open {
   transform: translateX(0%);
+  background: white;
   opacity: 1;
+}
+
+@media screen and (max-width: 768px) {
+  .library {
+    width: 100%;
+  }
+  .song-description {
+  padding-left: 1rem;
+  h3 {
+    font-size: 1.3rem;
+  }
+  h4 {
+    font-size: 1rem;
+  }
+}
 }
