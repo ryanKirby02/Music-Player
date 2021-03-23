@@ -7,9 +7,10 @@ const Library = ({
   setCurrentSong,
   audioRef,
   isPlaying,
+  isLibraryOpen
 }) => {
   return (
-    <div className='library'>
+    <div className={`library ${isLibraryOpen ? 'library-open' : ''}`}>
       <h2>Library</h2>
       <div className='library-songs'>
         {songs.map((song) => (
